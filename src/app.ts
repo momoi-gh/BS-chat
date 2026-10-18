@@ -5,7 +5,7 @@ export function buildApp(): FastifyInstance {
     logger: false,
   });
 
-  app.get('/', async () => ({
+  app.get('/', () => ({
     name: 'bs-chat',
     status: 'ok',
   }));
