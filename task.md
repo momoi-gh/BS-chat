@@ -2,7 +2,7 @@
 
 > 项目目录：`/home/momo/Projects/shcool/BS`
 > 更新时间：2026-10-18
-> 当前状态：大纲已确认，**卡在 P0 环境安装**
+> 当前状态：P0-1 已完成；P0-3 因 docker.io 被 DNS 劫持，**待配置镜像源**
 > 执行方式：Plan 模式只读 → 切 Act 模式后按检查点 A / B 推进
 
 ---
@@ -81,28 +81,34 @@
   ```
   注意：不要安装 `docker`，避免与 podman socket/iptables 冲突。
 
-- [ ] **P0-2 验证 rootless**
+- [x] **P0-2 验证 rootless**
   ```bash
   podman info
   ```
   通过标准：输出 `host.security.rootless: true`，`graphDriverName` 正常。
+  - ✅ 结果（2026-10-18）：`podman 6.1.2`、`podman-compose 1.6.0`、`rootless=true`、`graphDriver=overlay`、cgroup v2 / systemd、`crun`、`netavark`。
 
 - [ ] **P0-3 验证镜像拉取**
   ```bash
   podman run --rm docker.io/library/hello-world
   ```
   失败处理：记录报错 → 配置代理或 `/etc/containers/registries.conf` 镜像源后再继续。
+  - ❌ 直连失败（2026-10-18）：DNS 被劫持，`registry-1.docker.io` 解析为 `173.244.217.42` / `2a03:2880:...`；报错 `x509: certificate is valid for ...traefik.default, not registry-1.docker.io`。
+  - ✅ 镜像源验证通过：`podman run --rm docker.1ms.run/library/hello-world:latest` 成功输出 `Hello from Docker!`。
+  - ⏭ 待办（需 sudo）：把 `docker.1ms.run` 写入 `/etc/containers/registries.conf`（`unqualified-search-registries` + `[[registry.mirror]]`），再重跑上面的直连命令。
 
-- [ ] **P0-4 验证新终端可用 Node**
+- [x] **P0-4 验证新终端可用 Node**
   ```bash
   bash -lc 'node -v && npm -v'
   ```
   失败处理：在 shell rc 中加入 `fnm env` 初始化。
+  - ✅ 结果（2026-10-18）：`node v24.20.0`、`npm 11.19.0`，非交互登录 shell 下可用。
 
 - [ ] **P0-5（可选）安装 psql 客户端**
   ```bash
   sudo pacman -S --needed postgresql   # 仅为宿主机 psql/pg_dump
   ```
+  - ⏸ 未执行（可选，2026-10-18）：`psql` 仍缺失，`sudo` 非交互需要密码。替代方案：统一用 `podman exec -it bs-postgres psql`，不装宿主机客户端。
 
 > **阻塞规则**：P0-1 ~ P0-3 未通过，T1.x 及之后一律不开始。
 
