@@ -1,0 +1,21 @@
+[Unit]
+Description=BS Chat API
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=localhost/bs-chat-api:latest
+ContainerName=bs-chat-api
+Network=bs_default
+PublishPort=127.0.0.1:3100:3000
+EnvironmentFile=%h/Projects/shcool/BS/.env.prod
+Environment=HOST=0.0.0.0
+Environment=PORT=3000
+Environment=NODE_ENV=production
+
+[Service]
+Restart=always
+TimeoutStartSec=60
+
+[Install]
+WantedBy=default.target

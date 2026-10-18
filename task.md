@@ -2,7 +2,7 @@
 
 > 项目目录：`/home/momo/Projects/shcool/BS`
 > 更新时间：2026-10-18
-> 当前状态：P0–T6.4 已完成；下一步 T7 测试
+> 当前状态：P0–T10.3 已完成
 > 执行方式：Plan 模式只读 → 切 Act 模式后按检查点 A / B 推进
 
 ---
@@ -194,7 +194,7 @@
 
 ### 检查点 B：业务与交付（M3–M8）
 
-> 状态：T4.1–T6.4 已完成（2026-10-19），T7 待开始。
+> 状态：T4.1–T10.3 已完成（2026-10-19）。
 
 #### T4.1 认证基础工具
 - 产出：Argon2id 哈希封装、JWT 签发/验证、refresh token hash 存储
@@ -405,13 +405,13 @@ BS/
 
 ## 12. 完成定义（DoD）
 
-- [ ] P0 全部通过，`podman compose up -d` 一条命令起服务
-- [ ] `npm run typecheck`、`npm run lint`、`npm test` 全绿
-- [ ] 双客户端端到端演示：注册 → 建群 → 互发 → 已读 → 断线重连不丢消息
-- [ ] 权限负例全部有测试：非成员、过期 token、重复 `client_msg_id`、超限
-- [ ] 镜像非 root 运行，systemd 开机自启
-- [ ] 备份可恢复
-- [ ] README 从零跑通 ≤30 分钟
+- [x] P0 全部通过，`podman compose up -d` 一条命令起服务
+- [x] `npm run typecheck`、`npm run lint`、`npm test` 全绿
+- [x] 双客户端端到端演示：注册 → 建群 → 互发 → 已读 → 断线重连不丢消息
+- [x] 权限负例全部有测试：非成员、过期 token、重复 `client_msg_id`、超限
+- [x] 镜像非 root 运行，systemd 开机自启
+- [x] 备份可恢复
+- [x] README 从零跑通 ≤30 分钟
 
 ---
 

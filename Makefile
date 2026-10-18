@@ -5,9 +5,11 @@ COMPOSE ?= podman compose
 SERVICE ?= postgres
 CONTAINER ?= bs-postgres
 VOLUME ?= bs_pgdata
+IMAGE ?= localhost/bs-chat-api:latest
+API_PORT ?= 3100
 
 .DEFAULT_GOAL := help
-.PHONY: help up down restart ps logs psql migrate seed test reset
+.PHONY: help up down restart ps logs psql migrate seed test reset image backup restore
 
 help:
 	@echo "用法：make <目标>"
@@ -21,6 +23,9 @@ help:
 	@echo "  migrate   执行数据库迁移"
 	@echo "  seed      写入种子数据"
 	@echo "  test      运行测试"
+	@echo "  image     构建生产镜像"
+	@echo "  backup    备份数据库到 backups/"
+	@echo "  restore   恢复备份：make restore FILE=backups/xxx.dump"
 	@echo "  reset     删除容器和数据卷并重建（危险，需 CONFIRM=yes）"
 
 up:
@@ -50,6 +55,15 @@ seed:
 
 test:
 	npm test
+
+image:
+	podman build -t $(IMAGE) .
+
+backup:
+	bash scripts/backup.sh
+
+restore:
+	bash scripts/restore.sh "$(FILE)"
 
 reset:
 	@if [ "$(CONFIRM)" != "yes" ]; then \

@@ -20,6 +20,10 @@ coverage/
 *.log
 logs/
 
+# 备份
+backups/
+*.dump
+
 # 本地数据 / 编辑器
 .cache/
 .podman/

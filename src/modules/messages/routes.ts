@@ -35,7 +35,10 @@ export function messageRoutes(app: FastifyInstance): void {
 
   app.post<{ Params: { id: string } }>(
     '/conversations/:id/messages',
-    { preHandler: requireAuth },
+    {
+      preHandler: requireAuth,
+      config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
+    },
     async (request, reply) => {
       const input = parseInput(sendMessageSchema, request.body);
       const message = await messages.sendMessage(request.params.id, request.user.id, input);

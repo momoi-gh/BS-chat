@@ -10,7 +10,11 @@ import { listConversationIds } from '../modules/conversations/service.js';
 import { getMessagesAfter, markRead, sendMessage } from '../modules/messages/service.js';
 import { setRealtimeServer } from './bus.js';
 
-type SocketData = { user: { id: string }; conversationIds: Set<string> };
+type SocketData = {
+  user: { id: string };
+  conversationIds: Set<string>;
+  messageWindow?: { count: number; resetAt: number };
+};
 type Ack = (response: unknown) => void;
 
 const sendSchema = z.object({
@@ -84,6 +88,19 @@ function parsePayload<T>(schema: ZodType<T>, payload: unknown): T | null {
   return result.success ? result.data : null;
 }
 
+function allowMessageSend(socket: Socket): boolean {
+  const data = socket.data as SocketData;
+  const now = Date.now();
+
+  if (!data.messageWindow || data.messageWindow.resetAt <= now) {
+    data.messageWindow = { count: 0, resetAt: now + 10_000 };
+  }
+
+  data.messageWindow.count += 1;
+
+  return data.messageWindow.count <= 30;
+}
+
 function respondError(socket: Socket, ack: Ack | undefined, error: unknown): void {
   const appError =
     error instanceof AppError ? error : new AppError(500, 'INTERNAL_ERROR', '服务器内部错误');
@@ -103,6 +120,10 @@ async function handleSend(
 
   if (!input) {
     return ack?.({ ok: false, error: { code: 'VALIDATION_ERROR', message: '参数不合法' } });
+  }
+
+  if (!allowMessageSend(socket)) {
+    return ack?.({ ok: false, error: { code: 'TOO_MANY_REQUESTS', message: '发送过于频繁' } });
   }
 
   try {

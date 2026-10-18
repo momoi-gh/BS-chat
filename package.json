@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.3.1",
+    "@fastify/helmet": "^13.2.0",
     "@fastify/rate-limit": "^11.2.1",
     "argon2": "^0.45.1",
     "drizzle-orm": "^0.45.4",
@@ -39,6 +40,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
+    "@vitest/coverage-v8": "^5.0.5",
     "drizzle-kit": "^0.31.11",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",

@@ -8,8 +8,8 @@
 
 - 名称：`bs-chat`（聊天服务器后端）
 - 目录：`/home/momo/Projects/shcool/BS`
-- 当前进度：P0–T6.4 完成（compose、Drizzle、认证、会话/消息、Socket.IO）
-- 下一步：T7 测试与覆盖率
+- 当前进度：P0–T10.3 完成（含测试、加固、镜像、Quadlet、备份、文档）
+- 下一步：上线前人工验收（真实域名 + Caddy TLS）
 - git：`main` 分支，已配置 `origin`（GitHub `momoi-gh/BS-chat`）；当前有未提交改动
 
 ## 2. 宿主机环境
@@ -41,6 +41,8 @@
 | socket.io-client | 4.8.4（dev） |
 | @fastify/cors | 11.3.1 |
 | @fastify/rate-limit | 11.2.1 |
+| @fastify/helmet | 13.2.0 |
+| @vitest/coverage-v8 | 5.0.5（dev） |
 
 ### 开发依赖
 | 包 | 版本 |
@@ -155,6 +157,11 @@ npm test               # vitest run（当前无测试文件，exit 0）
 npm run db:generate    # 生成迁移
 npm run db:migrate     # 应用迁移
 npm run db:seed        # 种子数据
+npm run test:coverage  # 覆盖率（阈值 70%，当前 90%+）
+
+make image             # 构建生产镜像
+make backup            # 备份到 backups/
+make restore FILE=...  # 恢复备份
 
 podman compose up -d
 podman compose ps
@@ -231,8 +238,37 @@ podman exec bs-postgres psql -U bs -d bs_chat -tAc 'select version();'
 - [x] T4.x 认证（注册/登录/刷新轮换/登出/me）
 - [x] T5.x 会话与消息（私聊/群聊/成员/幂等/分页/已读/未读/软删）
 - [x] T6.x WebSocket（鉴权/广播/typing/已读/在线/补拉/越权）
-- [ ] T7 测试与覆盖率
-- [ ] T8 加固、T9 生产化、T10 文档
+- [x] T7 测试与覆盖率（50 tests，行 90.87% / 函数 96.8%）
+- [x] T8 加固（helmet、1MB、限流、慢请求、/metrics、优雅关闭）
+- [x] T9 生产化（镜像 215MB、Quadlet、Caddy 配置、备份/恢复）
+- [x] T10 文档（README + docs/api|ws|errors|schema|operations）
+- [ ] 真实域名 + Caddy TLS 未实测（本机无域名/Caddy）
+- [ ] git 提交（当前全部改动未提交）
+
+## 15. 部署与测试现状
+
+| 项 | 值 |
+|---|---|
+| 生产镜像 | `localhost/bs-chat-api:latest`，215 MB，非 root |
+| Quadlet | `~/.config/containers/systemd/bs-chat-api.container`，服务名 `bs-chat-api`，端口 3100 |
+| 生产 env | `.env.prod`（git 忽略，Quadlet 依赖） |
+| 备份 | `backups/bs_chat-*.dump`（已加入 .gitignore） |
+| 测试库 | `bs_chat_test`（setup 自动创建 + 迁移） |
+| 测试结果 | 50 passed / 7 files |
+| 覆盖率 | 语句 90.84% / 分支 74.9% / 函数 96.8% / 行 90.87% |
+| 演练 | 全新库迁移 + seed + 编译产物 health/ready/login 通过 |
+| 备份恢复 | 恢复到临时库后 users=3 / messages=3 |
+
+## 16. T7–T10 新增约定
+
+- 测试文件统一放 `tests/`；`tsconfig.json` include tests，`tsconfig.build.json` 只编译 `src`
+- 测试 setup 用 `DATABASE_URL` 覆盖为 `bs_chat_test`，`NODE_ENV=test` 时**禁用限流插件**
+- 覆盖率排除：`server.ts`、`config/env.ts`、`db/schema.ts`、`db/migrations`、`db/seed.ts`、`types`
+- 生产镜像不包含 `tsx`/`pino-pretty`/测试依赖
+- `.env.prod` 与 `.env` 分离；Quadlet 用 `.env.prod`，DATABASE_URL 指向 `bs-postgres:5432`
+- Caddy 反代 3100，WebSocket 自动升级；rootless 不能直接绑 443
+- 备份脚本从 `.env` 读取 `POSTGRES_USER/DB`，使用 `pg_dump -Fc`
+
 - [ ] 当前未提交改动：`compose.yaml`、`src/db/`、`src/lib/`、`tsconfig.build.json`、`vitest.config.js`、`src/app.ts`、`src/server.ts`、`package*.json`、`.env.example`
 
 ## 12. 决策记录

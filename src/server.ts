@@ -1,7 +1,9 @@
 import { buildApp } from './app.js';
 import { env } from './config/env.js';
 import { queryOne } from './db/dbfunc.js';
+import { pool } from './db/pool.js';
 import { logger } from './lib/logger.js';
+import { toLoggableError } from './lib/log-error.js';
 import { initRealtime } from './realtime/index.js';
 
 const app = buildApp();
@@ -35,5 +37,36 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 }
+
+let shuttingDown = false;
+
+async function shutdown(signal: NodeJS.Signals): Promise<void> {
+  if (shuttingDown) {
+    return;
+  }
+
+  shuttingDown = true;
+  logger.info({ signal }, '收到退出信号，开始优雅关闭');
+
+  try {
+    await app.close();
+    await pool.end();
+    logger.info('已优雅关闭');
+    logger.flush();
+    process.exit(0);
+  } catch (error) {
+    logger.error({ err: toLoggableError(error) }, '关闭失败');
+    logger.flush();
+    process.exit(1);
+  }
+}
+
+process.on('SIGTERM', () => {
+  void shutdown('SIGTERM');
+});
+
+process.on('SIGINT', () => {
+  void shutdown('SIGINT');
+});
 
 void main();

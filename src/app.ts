@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
 
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyError } from 'fastify';
 
 import { env } from './config/env.js';
+import { pool } from './db/pool.js';
 import { queryOne } from './db/dbfunc.js';
 import type { AppError } from './lib/errors.js';
 import { logger } from './lib/logger.js';
@@ -18,6 +20,7 @@ export function buildApp() {
     loggerInstance: logger,
     genReqId: () => randomUUID(),
     requestIdHeader: false,
+    bodyLimit: 1024 * 1024,
   });
 
   app.register(cors, {
@@ -25,13 +28,30 @@ export function buildApp() {
     credentials: true,
   });
 
-  app.register(rateLimit, {
-    max: 300,
-    timeWindow: '1 minute',
-  });
+  app.register(helmet, { contentSecurityPolicy: false });
+
+  if (env.NODE_ENV !== 'test') {
+    app.register(rateLimit, {
+      max: 300,
+      timeWindow: '1 minute',
+    });
+  }
 
   app.addHook('onSend', async (request, reply) => {
     reply.header('x-request-id', request.id);
+  });
+
+  app.addHook('onResponse', async (request, reply) => {
+    if (reply.elapsedTime > 500) {
+      request.log.warn(
+        {
+          method: request.method,
+          url: request.url,
+          responseTime: Math.round(reply.elapsedTime),
+        },
+        '慢请求',
+      );
+    }
   });
 
   app.setNotFoundHandler((request, reply) => {
@@ -86,6 +106,16 @@ export function buildApp() {
       });
     }
   });
+
+  app.get('/metrics', () => ({
+    uptime: Math.round(process.uptime()),
+    memory: process.memoryUsage(),
+    databasePool: {
+      total: pool.totalCount,
+      idle: pool.idleCount,
+      waiting: pool.waitingCount,
+    },
+  }));
 
   app.register(authRoutes);
   app.register(conversationRoutes);
