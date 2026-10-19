@@ -160,4 +160,12 @@ scripts/           backup / restore
 | 重启后容器不自启                        | rootless 需 Quadlet 或 `podman-restart.service`                      |
 | `node: command not found`               | fnm 未在 shell 初始化                                                |
 
-更多版本、约定与踩坑见 [memory.md](memory.md)。
+## 更多文档
+
+- [前端交接.md](前端交接.md)：Web / Flutter 前端接入、认证、Socket.IO、缺口说明
+- [docs/api.md](docs/api.md)：REST 接口
+- [docs/ws.md](docs/ws.md)：WebSocket 协议
+- [docs/errors.md](docs/errors.md)：错误码
+- [docs/schema.md](docs/schema.md)：数据模型
+- [docs/operations.md](docs/operations.md)：部署与运维
+- [memory.md](memory.md)：版本、约定、踩坑记录

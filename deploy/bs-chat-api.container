@@ -1,7 +1,7 @@
 [Unit]
 Description=BS Chat API
-After=network-online.target
-Wants=network-online.target
+After=network-online.target podman-restart.service
+Wants=network-online.target podman-restart.service
 
 [Container]
 Image=localhost/bs-chat-api:latest

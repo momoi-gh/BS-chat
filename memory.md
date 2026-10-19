@@ -258,6 +258,7 @@ podman exec bs-postgres psql -U bs -d bs_chat -tAc 'select version();'
 | 覆盖率 | 语句 90.84% / 分支 74.9% / 函数 96.8% / 行 90.87% |
 | 演练 | 全新库迁移 + seed + 编译产物 health/ready/login 通过 |
 | 备份恢复 | 恢复到临时库后 users=3 / messages=3 |
+| 前端交接 | `前端交接.md`（Web + Flutter 接入说明） |
 
 ## 16. T7–T10 新增约定
 
