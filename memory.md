@@ -8,8 +8,8 @@
 
 - 名称：`bs-chat`（聊天服务器后端）
 - 目录：`/home/momo/Projects/shcool/BS`
-- 当前进度：P0–T10.3 完成（含测试、加固、镜像、Quadlet、备份、文档）
-- 下一步：上线前人工验收（真实域名 + Caddy TLS）
+- 当前进度：P0–T10.3 + GHCR 发布 / 一键部署完成
+- 下一步：推送 tag 触发 Actions，验证 GHCR 包公开可拉取
 - git：`main` 分支，已配置 `origin`（GitHub `momoi-gh/BS-chat`）；当前有未提交改动
 
 ## 2. 宿主机环境
@@ -259,6 +259,10 @@ podman exec bs-postgres psql -U bs -d bs_chat -tAc 'select version();'
 | 演练 | 全新库迁移 + seed + 编译产物 health/ready/login 通过 |
 | 备份恢复 | 恢复到临时库后 users=3 / messages=3 |
 | 前端交接 | `前端交接.md`（Web + Flutter 接入说明） |
+| GHCR 工作流 | `.github/workflows/publish.yml`（push `v*` tag 触发） |
+| GHCR 镜像 | `ghcr.io/momoi-gh/bs-chat/api`、`ghcr.io/momoi-gh/bs-chat/postgres` |
+| 一键部署 | `make deploy TAG=v0.1.0` / `deploy/deploy.sh` |
+| 镜像内迁移 | `/app/migrations` + `node dist/db/migrate.js` |
 
 ## 16. T7–T10 新增约定
 
@@ -269,6 +273,11 @@ podman exec bs-postgres psql -U bs -d bs_chat -tAc 'select version();'
 - `.env.prod` 与 `.env` 分离；Quadlet 用 `.env.prod`，DATABASE_URL 指向 `bs-postgres:5432`
 - Caddy 反代 3100，WebSocket 自动升级；rootless 不能直接绑 443
 - 备份脚本从 `.env` 读取 `POSTGRES_USER/DB`，使用 `pg_dump -Fc`
+- API 镜像包含 `/app/migrations`，运行 `node dist/db/migrate.js` 即可迁移，不再依赖源码
+- PostgreSQL 镜像用 `docker buildx imagetools create` 从 Docker Hub 复制到 GHCR
+- GHCR 包默认尝试设为 public；失败到 Packages 页面手动设置
+- `deploy/deploy.sh` 支持 `SKIP_PULL=1` 做本地演练；迁移失败不会自动回滚
+- 一键部署依赖 Quadlet 服务 `bs-chat-api` 已安装
 
 - [ ] 当前未提交改动：`compose.yaml`、`src/db/`、`src/lib/`、`tsconfig.build.json`、`vitest.config.js`、`src/app.ts`、`src/server.ts`、`package*.json`、`.env.example`
 

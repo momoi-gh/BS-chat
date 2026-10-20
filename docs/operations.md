@@ -45,6 +45,60 @@ curl -s localhost:3100/healthz
 curl -s localhost:3100/readyz
 ```
 
+## 2.1 GitHub Actions + GHCR
+
+推送 tag 触发 `.github/workflows/publish.yml`：
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+产出：
+
+```text
+ghcr.io/momoi-gh/bs-chat/api:v0.1.0
+ghcr.io/momoi-gh/bs-chat/api:latest
+ghcr.io/momoi-gh/bs-chat/postgres:18-alpine
+```
+
+- API 镜像由 `Containerfile` 构建（amd64）
+- PostgreSQL 镜像由 `docker buildx imagetools` 从 Docker Hub 复制
+- 工作流会尝试把两个 package 设为 public；失败则到 GitHub Packages 页面手动设置
+- 服务器拉公开包不需要登录；私有包需要 PAT（`read:packages`）
+
+## 2.2 一键部署
+
+服务器准备：
+
+```bash
+cp deploy/api.env.example .env.prod
+# 修改 POSTGRES_PASSWORD / DATABASE_URL / JWT 密钥 / CORS
+```
+
+部署：
+
+```bash
+make deploy TAG=v0.1.0
+```
+
+`deploy/deploy.sh` 流程：
+
+1. `podman pull` API + PostgreSQL
+2. 数据卷不存在则创建 `bs_pgdata`
+3. `podman compose -f deploy/compose.prod.yaml -p bs up -d postgres`
+4. 等待 `pg_isready`
+5. `podman run --rm ... node dist/db/migrate.js` 执行迁移
+6. 把新镜像 tag 成 `localhost/bs-chat-api:latest`，重启 Quadlet
+7. 轮询 `/readyz`；失败时回滚到 `localhost/bs-chat-api:previous`
+
+注意：
+
+- 迁移不会自动回滚
+- 脚本依赖已安装的 `bs-chat-api` Quadlet 服务
+- 公开包不需要 `podman login`；私有包先执行
+  `echo "$PAT" | podman login ghcr.io -u momoi-gh --password-stdin`
+
 ## 3. Quadlet（开机自启）
 
 文件：`deploy/bs-chat-api.container`。

@@ -132,6 +132,36 @@ podman run -d --name bs-chat-api \
 - 生产环境变量模板：`deploy/api.env.example`
 - 详细步骤见 [docs/operations.md](docs/operations.md)
 
+### 发布到 GitHub Container Registry
+
+推送 `v*` tag 会触发 `.github/workflows/publish.yml`：
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+产出：
+
+```text
+ghcr.io/momoi-gh/bs-chat/api:v0.1.0
+ghcr.io/momoi-gh/bs-chat/api:latest
+ghcr.io/momoi-gh/bs-chat/postgres:18-alpine
+```
+
+工作流会尝试把两个包设为 public；如果被 GitHub 策略阻止，到 Packages 页面手动改。
+
+### 一键部署
+
+```bash
+cp deploy/api.env.example .env.prod
+# 修改 POSTGRES_PASSWORD / DATABASE_URL / JWT 密钥 / CORS
+
+make deploy TAG=v0.1.0
+```
+
+`deploy/deploy.sh` 会拉取镜像、启动数据库、执行迁移、重启 API，并在健康检查失败时回滚到上一个 API 镜像。
+
 ## 目录结构
 
 ```text

@@ -7,9 +7,10 @@ CONTAINER ?= bs-postgres
 VOLUME ?= bs_pgdata
 IMAGE ?= localhost/bs-chat-api:latest
 API_PORT ?= 3100
+TAG ?= latest
 
 .DEFAULT_GOAL := help
-.PHONY: help up down restart ps logs psql migrate seed test reset image backup restore
+.PHONY: help up down restart ps logs psql migrate seed test reset image backup restore deploy
 
 help:
 	@echo "用法：make <目标>"
@@ -24,6 +25,7 @@ help:
 	@echo "  seed      写入种子数据"
 	@echo "  test      运行测试"
 	@echo "  image     构建生产镜像"
+	@echo "  deploy    从 GHCR 拉取并部署：make deploy TAG=v0.1.0"
 	@echo "  backup    备份数据库到 backups/"
 	@echo "  restore   恢复备份：make restore FILE=backups/xxx.dump"
 	@echo "  reset     删除容器和数据卷并重建（危险，需 CONFIRM=yes）"
@@ -58,6 +60,9 @@ test:
 
 image:
 	podman build -t $(IMAGE) .
+
+deploy:
+	bash deploy/deploy.sh $(TAG)
 
 backup:
 	bash scripts/backup.sh
